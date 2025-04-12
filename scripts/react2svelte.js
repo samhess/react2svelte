@@ -1,42 +1,49 @@
-import { existsSync, mkdirSync } from 'fs'
-import { readFile, readdir, writeFile } from 'fs/promises'
-import { basename, format, resolve } from 'path'
+import { existsSync, mkdirSync } from 'fs';
+import { readFile, readdir, writeFile } from 'fs/promises';
+import { basename, format, resolve } from 'path';
 
-const reactRepoName = process.argv[2] ?? 'reactRepo'
-const reactRepo = resolve(import.meta.dirname, '..', '..', reactRepoName)
-const route = process.argv[3] ?? ''
+const reactRepoName = process.argv[2] ?? 'reactRepo';
+const reactRepo = resolve(import.meta.dirname, '..', '..', reactRepoName);
+const route = process.argv[3] ?? '';
 
 function getImports(code) {
 	return code
 		.split('\r\n')
-		.filter((line) => line.includes('import ') && !line.includes('import type {Route} from'))
+		.filter(
+			(line) =>
+				line.includes('import ') &&
+				!line.includes('import type {Route} from') &&
+				!line.includes('useState')
+		)
 		.map((line) => line.trim())
 		.join('\r\n')
 		.replace(/@\/lib/g, '$lib')
 		.replace(/react-router/g, '@sveltejs/kit')
+		.replace(/react/g, 'svelte');
 }
 
 function getScript(code) {
-	const startFunction = code.indexOf('export default function')
-	const startFunctionBody = code.indexOf('\r\n',startFunction)
-	const endScript = code.indexOf('return', startFunctionBody)
-	return code.slice(startFunctionBody,endScript)
-		.replaceAll(/loaderData/g, '$props')
-		.replaceAll(/(\w*) = useState/g, '$1 = $state')
+	const startFunction = code.indexOf('export default function');
+	const startFunctionBody = code.indexOf('\r\n', startFunction);
+	const endScript = code.indexOf('return', startFunctionBody);
+	return code
+		.slice(startFunctionBody, endScript)
+		.replaceAll(/loaderData/g, '$props()')
+		.replaceAll(/(\w*) = useState/g, '$1 = $state');
 }
 
 function getTemplate(code) {
 	const startFunction = code.indexOf('export default function');
 	const startReturn = code.indexOf('return', startFunction);
 	code = code.slice(code.indexOf('(', startReturn) + 1, code.lastIndexOf(')'));
-	return (
-		code
-			.replaceAll('<>', '')
-			.replaceAll('</>', '')
-			.replaceAll('className=', 'class=')
-			.replaceAll('defaultValue', 'bind:value')
-			.trim()
-	);
+	return code
+		.replaceAll('<>', '')
+		.replaceAll('</>', '')
+		.replaceAll('className=', 'class=')
+		.replaceAll('defaultValue', 'bind:value')
+		.replaceAll(/{(\w*).map\([\w():]* => \(([\x00-\x7F]*)\)\)}/g, '{#each $1 as item} $2 {/each}')
+		.replaceAll(/\s{([^#&]*) &&[\W]*\(([^#]*)\)[\W]*}/g, '{#if $1} $2 {/if}')
+		.trim();
 }
 
 function getLoader(code) {
@@ -56,7 +63,7 @@ ${script.trim()}
 </script>
 
 ${template.trim()}
-`
+`;
 }
 
 function createLoader(reactCode) {
@@ -67,7 +74,7 @@ function createLoader(reactCode) {
 ${imports.trim()}
 
 ${loader.trim()}
-`
+`;
 }
 
 const files = await readdir(resolve(reactRepo, 'app', 'routes', route), {
