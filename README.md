@@ -1,6 +1,8 @@
 # React Router to Svelte Conversion
 
-## Creating a project
+This project is going to be a Svelte version of a React Router project
+
+## Creating the project
 
 ```bash
 # create a new project in the current directory
@@ -11,9 +13,10 @@ npx sv create
 
 ```bash
 cd scripts
-node convertRoutes.js <reactRepoFolder> <routesSubFolder>
+# assuming the React repo resides in the same parent directory as this Svelte project (sibling)
+npm run convert reactRepoName
 npm run format
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+# start the dev server
+npm run dev
 ```
