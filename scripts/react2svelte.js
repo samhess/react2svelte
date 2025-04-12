@@ -1,6 +1,6 @@
 function getImports(code) {
   return code
-    .split('\r\n')
+    .split('\n')
     .filter(
       (line) =>
         line.includes('import ') &&
@@ -8,7 +8,7 @@ function getImports(code) {
         !line.includes('useState')
     )
     .map((line) => line.trim())
-    .join('\r\n')
+    .join('\n')
     .replace(/@\/lib/g, '$lib')
     .replace(/react-router/g, '@sveltejs/kit')
     .replace(/react/g, 'svelte')
@@ -16,7 +16,7 @@ function getImports(code) {
 
 function getScript(code) {
   const startFunction = code.indexOf('export default function')
-  const startFunctionBody = code.indexOf('\r\n', startFunction)
+  const startFunctionBody = code.indexOf('\n', startFunction)
   const endScript = code.indexOf('return', startFunctionBody)
   return code
     .slice(startFunctionBody, endScript)
@@ -31,10 +31,23 @@ function getTemplate(code) {
   return code
     .replaceAll('<>', '')
     .replaceAll('</>', '')
+    .replaceAll('<Fragment>', '')
+    .replaceAll('</Fragment>', '')
     .replaceAll('className=', 'class=')
     .replaceAll('defaultValue', 'bind:value')
-    .replaceAll(/{(\w*).map\([\w():]* => \(([\x00-\x7F]*)\)\)}/g, '{#each $1 as item} $2 {/each}')
-    .replaceAll(/\s{([^#&]*) &&[\W]*\(([^#]*)\)[\W]*}/g, '{#if $1} $2 {/if}')
+    .replaceAll('onClick', 'onclick')
+    .replaceAll(
+      /\{([\w]*)\.map\({2}(\w*):?\s?\w*\) => \(([^&]*)\)\)\}/g,
+      '{#each $1 as $2} $3 {/each}'
+    )
+    .replaceAll(/\{([\w\d.?>\s]*) && \(([^&]*)\)\}/g, '{#if $1} $2 {/if}')
+    .replaceAll(/\{([\w\d.?>\s]*) && ([^\n]*)\}/g, '{#if $1} $2 {/if}')
+    .replaceAll(/\{([\w.]*) \? \(([^:]*)\) : \(([^#]*)\)\}/g, '{#if $1} $2 {:else} $3 {/if}')
+    .replaceAll(/\{([\w.]*) \? ([^:]*) : ([^\n]*)\}/g, '{#if $1} $2 {:else} $3 {/if}')
+    .replaceAll(
+      /\{([\w]*)\.map\({2}(\w*):?\s?\w*\) => \(([^&]*)\)\)\}/g,
+      '{#each $1 as $2} $3 {/each}'
+    )
     .trim()
 }
 

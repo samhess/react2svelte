@@ -7,7 +7,7 @@ const reactRepoName = process.argv[2] ?? 'reactRepo'
 const reactRepo = resolve(import.meta.dirname, '..', '..', reactRepoName)
 if (existsSync(reactRepo)) {
   const routesDir = resolve(reactRepo, 'app', 'routes')
-  const dirs = await readdir(routesDir, {withFileTypes: true,})
+  const dirs = await readdir(routesDir, {withFileTypes: true})
   for (const dir of dirs) {
     if (dir.isDirectory()) {
       const route = dir.name
@@ -33,7 +33,5 @@ if (existsSync(reactRepo)) {
     }
   }
 } else {
-  console.log(`React repo ${reactRepo} not found`);
+  console.log(`React repo ${reactRepo} not found`)
 }
-
-
