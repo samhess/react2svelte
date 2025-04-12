@@ -1,21 +1,17 @@
-# sv
-
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+# React Router to Svelte Conversion
 
 ## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
 
 ```bash
 # create a new project in the current directory
 npx sv create
 ```
 
-## Converting a React Router project
+## Converting route modules from React Router
 
 ```bash
 cd scripts
-node react2svelte.js <reactRepo> <route>
+node convertRoutes.js <reactRepoFolder> <routesSubFolder>
 npm run format
 
 # or start the server and open the app in a new browser tab
