@@ -3,6 +3,17 @@ import {readFile, readdir, writeFile} from 'fs/promises'
 import {basename, format, resolve} from 'path'
 import {createLoader, createTemplate} from './react2svelte.js'
 
+const dynamicRoutes = [
+  'country',
+  'currency',
+  'exchange',
+  'industry',
+  'listing',
+  'company',
+  'instrument',
+  'portfolio'
+]
+
 const reactRepoName = process.argv[2] ?? 'reactRepo'
 const reactRepo = resolve(import.meta.dirname, '..', '..', reactRepoName)
 if (existsSync(reactRepo)) {
@@ -16,11 +27,15 @@ if (existsSync(reactRepo)) {
       const files = await readdir(routeDir, {withFileTypes: true, recursive: true})
       for (const file of files) {
         if (!file.isDirectory()) {
-          const childRoute = basename(file.name, '.tsx')
+          const child = basename(file.name, '.tsx')
           const reactCode = await readFile(resolve(file.parentPath, file.name), {encoding: 'utf-8'})
           const loader = createLoader(reactCode)
           const tempalte = createTemplate(reactCode)
-          const routePath = resolve(import.meta.dirname, '..', 'src', 'routes', route, childRoute)
+          let param = ''
+          if (dynamicRoutes.includes(child)) {
+            param = '[key]'
+          }
+          const routePath = resolve(import.meta.dirname, '..', 'src', 'routes', route, child, param)
           const loaderFile = format({name: '+page', ext: 'server.ts', dir: routePath})
           const templateFile = format({name: '+page', ext: 'svelte', dir: routePath})
           if (!existsSync(routePath)) {
