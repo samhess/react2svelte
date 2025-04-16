@@ -11,44 +11,45 @@ export async function getRoutes(repoName, command) {
   return JSON.parse(child.stdout)
 }
 
-function getImports(code='',part='server') {
+function getImports(code = '', part = 'server') {
   const lastImport = code.lastIndexOf('import ')
-  let imports = code.slice(0,code.indexOf('\n',lastImport))
+  let imports = code
+    .slice(0, code.indexOf('\n', lastImport))
     .replace(/\/components\/(\w*)(['"])$/g, '/components/$1.svelte$2')
     .replace(/@\/lib/g, '$lib')
     .replace(/react-router/g, '@sveltejs/kit')
     .replace(/react/g, 'svelte')
     .split('\n')
-    .filter((line) => 
-      !line.includes('import type {Route} from') 
-      && !line.includes("from '~/sessions.server'")
-      && !line.includes("import {useState} from 'svelte'")
+    .filter(
+      (line) =>
+        !line.includes('import type {Route} from') &&
+        !line.includes("from '~/sessions.server'") &&
+        !line.includes("import {useState} from 'svelte'")
     )
     .map((line) => line.trim())
     .join('\n')
-  if (part='server') {
+  if ((part = 'server')) {
     return imports
       .split('\n')
       .filter((line) => !line.includes('/components/'))
       .map((line) => line.trim())
       .join('\n')
-  } else if (part='client') {
+  } else if ((part = 'client')) {
     return code
-    .split('\n')
-    .filter((line) => !line.includes('@sveltejs/kit'))
-    .map((line) => line.trim())
-    .join('\n')
+      .split('\n')
+      .filter((line) => !line.includes('@sveltejs/kit'))
+      .map((line) => line.trim())
+      .join('\n')
   }
 }
 
 function getScript(code) {
   const startFunction = code.indexOf('export default function')
-  const startFunctionBody = code.indexOf('\n', startFunction)
-  const endScript = code.indexOf('return', startFunctionBody)
+  const startScript = code.indexOf('\n', startFunction)
+  const endScript = code.indexOf('return (', startScript)
   return code
-    .slice(startFunctionBody, endScript)
+    .slice(startScript, endScript)
     .replaceAll(/loaderData/g, 'data')
-
     .replace(/(const|let) \[(\w*), \w*\] = useState/g, 'let $2 = $state')
     .replaceAll(/\sprops/g, ' $props()')
     .replaceAll('useEffect', '$effect')
@@ -58,7 +59,7 @@ function getScript(code) {
 
 function getTemplate(code) {
   const startFunction = code.indexOf('export default function')
-  const startReturn = code.indexOf('return', startFunction)
+  const startReturn = code.indexOf('return (', startFunction)
   code = code.slice(code.indexOf('(', startReturn) + 1, code.lastIndexOf(')'))
   return code
     .replaceAll('<>', '')
@@ -96,7 +97,7 @@ function getLoader(code) {
 }
 
 export function getServerPart(reactCode) {
-  const imports = getImports(reactCode,'server')
+  const imports = getImports(reactCode, 'server')
   const loader = getLoader(reactCode)
 
   return `
@@ -108,7 +109,7 @@ ${loader.trim()}
 }
 
 export function getClientPart(reactCode) {
-  const imports = getImports(reactCode,'client')
+  const imports = getImports(reactCode, 'client')
   const script = getScript(reactCode)
   const template = getTemplate(reactCode)
 
