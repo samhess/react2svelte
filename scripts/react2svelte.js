@@ -19,23 +19,28 @@ function getImports(code = '', part = 'server') {
     .replace(/@\/lib/g, '$lib')
     .replace(/react-router/g, '@sveltejs/kit')
     .replace(/react/g, 'svelte')
+    .replace(
+      /import \{data([^\}])*\} from '@sveltejs\/kit'/g,
+      "import {json,error$1} from '@sveltejs\/kit'"
+    )
     .split('\n')
     .filter(
       (line) =>
         !line.includes('import type {Route} from') &&
         !line.includes("from '~/sessions.server'") &&
-        !line.includes("import {useState} from 'svelte'")
+        !line.includes("import {useState} from 'svelte'") &&
+        !line.includes("import {Fragment} from 'svelte'")
     )
     .map((line) => line.trim())
     .join('\n')
-  if ((part = 'server')) {
+  if (part === 'server') {
     return imports
       .split('\n')
       .filter((line) => !line.includes('/components/'))
       .map((line) => line.trim())
       .join('\n')
-  } else if ((part = 'client')) {
-    return code
+  } else if (part === 'client') {
+    return imports
       .split('\n')
       .filter((line) => !line.includes('@sveltejs/kit'))
       .map((line) => line.trim())
@@ -75,12 +80,10 @@ function getTemplate(code) {
       /\{([\w]*)\.map\({2}(\w*):?\s?\w*\) => \(([^&]*)\)\)\}/g,
       '{#each $1 as $2} $3 {/each}'
     )
-    .replaceAll(/\{([\w\d.?>\s]*) && \(([^&]*)\)\}/g, '{#if $1} $2 {/if}')
-    .replaceAll(/\{([\w\d.?>\s]*) && ([^\n]*)\}/g, '{#if $1} $2 {/if}')
-    .replaceAll(/\{([\w.]*) \? \(([^:]*)\) : \(([^#]*)\)\}/g, '{#if $1} $2 {:else} $3 {/if}')
-    .replaceAll(/\{([\w.]*) \? ([^:]*) : ([^\n]*)\}/g, '{#if $1} $2 {:else} $3 {/if}')
+    .replaceAll(/\{([\w\d.?>\s]*) && \(([^&?]*)\s\)\}/g, '{#if $1} $2 {/if}')
+    .replaceAll(/\{([\w.]*) \? \(([^:]*)\) : \(([^?]*)\s\)\}/g, '{#if $1} $2 {:else} $3 {/if}')
     .replaceAll(
-      /\{([\w]*)\.map\({2}(\w*):?\s?\w*\) => \(([^&]*)\)\)\}/g,
+      /\{([\w]*)\.map\({2}(\w*):?\s?\w*\) => \(([^?]*)\)\)\}/g,
       '{#each $1 as $2} $3 {/each}'
     )
     .trim()
