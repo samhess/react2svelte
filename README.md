@@ -16,7 +16,9 @@ cd scripts
 # assuming the React repo resides in the same parent directory as this Svelte project (sibling)
 npm run convert reactRepoName
 npm run format
-
+# fix issues
+npm run typecheck
+# fix issues
 # start the dev server
 npm run dev
 ```

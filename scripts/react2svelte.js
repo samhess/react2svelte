@@ -31,8 +31,8 @@ function getImports(code = '', part = 'server') {
         !line.includes("import {useState} from 'svelte'") &&
         !line.includes("import {Fragment} from 'svelte'")
     )
-    .map((line) => line.trim())
     .join('\n')
+    .trim()
   if (part === 'server') {
     return imports
       .split('\n')
@@ -60,43 +60,64 @@ function getScript(code) {
     .replaceAll('useEffect', '$effect')
     .replaceAll(/useRef/g, '$state')
     .replaceAll('.current', '')
+    .trim()
 }
 
 function getTemplate(code) {
-  const startFunction = code.indexOf('export default function')
-  const startReturn = code.indexOf('return (', startFunction)
-  code = code.slice(code.indexOf('(', startReturn) + 1, code.lastIndexOf(')'))
-  return code
-    .replaceAll('<>', '')
-    .replaceAll('</>', '')
-    .replaceAll('<Fragment>', '')
-    .replaceAll('</Fragment>', '')
-    .replaceAll('className=', 'class=')
-    .replaceAll('defaultValue', 'bind:value')
-    .replaceAll('onClick', 'onclick')
-    .replace(/\sref=\{/g, ' bind:this={')
-    .replace(/key=\{[^}]*\}/g, '')
-    .replaceAll(
-      /\{([\w]*)\.map\({2}(\w*):?\s?\w*\) => \(([^&]*)\)\)\}/g,
-      '{#each $1 as $2} $3 {/each}'
+  if (code.includes('export default function')) {
+    const startFunction = code.indexOf('export default function')
+    const startReturn = code.indexOf('return (', startFunction)
+    code = code.slice(code.indexOf('(', startReturn) + 1, code.lastIndexOf(')'))
+    return (
+      code
+        .replaceAll('<>', '')
+        .replaceAll('</>', '')
+        .replaceAll('<Fragment>', '')
+        .replaceAll('</Fragment>', '')
+        .replaceAll('className=', 'class=')
+        .replaceAll('defaultValue', 'bind:value')
+        .replaceAll('onClick', 'onclick')
+        .replace(/\sref=\{/g, ' bind:this={')
+        .replace(/key=\{[^}]*\}/g, '')
+        // {condition && <tag />} single line
+        .replace(/\{([\w\d.?>\s]*) && (<[^\n]*\/>)\}/g, '{#if $1} $2 {/if}')
+        // {array.map((company) => (HTML))}
+        .replace(
+          /\{(\w*|\w*\.\w*)\.map\({2}([^:)]*)[^)]*\) => \(([^&]*)\)\)\}/g,
+          '{#each $1 as $2} $3 {/each}'
+        )
+        // run twice for nested loops
+        .replace(
+          /\{(\w*|\w*\.\w*)\.map\({2}([^:)]*)[^)]*\) => \(([^&]*)\)\)\}/g,
+          '{#each $1 as $2} $3 {/each}'
+        )
+        // {condition && (HTML)} multi line
+        .replace(/\{([^&}]*) && \(([^&]*)\s+\)\}/g, '{#if $1} $2 {/if}')
+        .replace(/\{([^&}]*) && \(([^#]*)\s+\)\}/g, '{#if $1} $2 {/if}')
+        .replace(
+          /\{(\w*|\w*\.\w*)\.map\({2}(\w*)[^)]*\) => \(([^&]*)\)\)\}/g,
+          '{#each $1 as $2} $3 {/each}'
+        )
+        // {condition && HTML : HTML}
+        .replace(/[^=$]\{([^?}]*) \? ([^:]*) : ([^&}]*)\}/g, '{#if $1} $2 {:else} $3 {/if}')
+        .trim()
     )
-    .replaceAll(/\{([\w\d.?>\s]*) && \(([^&?]*)\s\)\}/g, '{#if $1} $2 {/if}')
-    .replaceAll(/\{([\w.]*) \? \(([^:]*)\) : \(([^?]*)\s\)\}/g, '{#if $1} $2 {:else} $3 {/if}')
-    .replaceAll(
-      /\{([\w]*)\.map\({2}(\w*):?\s?\w*\) => \(([^?]*)\)\)\}/g,
-      '{#each $1 as $2} $3 {/each}'
-    )
-    .trim()
+  } else {
+    return ''
+  }
 }
 
 function getLoader(code) {
   const start = code.indexOf('export async function loader')
-  const end = code.indexOf('export default function')
+  const end = code.includes('export default function')
+    ? code.indexOf('export default function')
+    : code.lastIndexOf('}' + 1)
   code = code.slice(start, end)
   return code
     .replace(/loader\(([^)]*)\)/g, 'load({params,request})')
-    .replace(/throw data\(([^,]*), (\d{3})\)/g, 'error($2,$1)')
+    .replace(/throw data\(([^,]*), ([^)]*)\)/g, 'error($2,$1)')
     .replace(/redirect\(([^,]*), (\d{3})\)/g, 'redirect($2,$1)')
+    .trim()
 }
 
 export function getServerPart(reactCode) {
@@ -105,9 +126,9 @@ export function getServerPart(reactCode) {
 
   return `
 import type {PageServerLoad} from './$types'
-${imports.trim()}
+${imports}
 
-${loader.trim()}
+${loader}
 `
 }
 
@@ -119,12 +140,12 @@ export function getClientPart(reactCode) {
   return `
 <script lang="ts">
 import type { PageProps } from './$types'
-${imports.trim()}
+${imports}
 let {data,form}:PageProps = $props()
-${script.trim()}
+${script}
 </script>
 
-${template.trim()}
+${template}
 `
 }
 
@@ -135,10 +156,10 @@ export function createComponent(reactCode) {
 
   return `
 <script lang="ts">
-${imports.trim()}
-${script.trim()}
+${imports}
+${script}
 </script>
 
-${template.trim()}
+${template}
 `
 }
