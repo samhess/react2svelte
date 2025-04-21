@@ -3,7 +3,7 @@
 This project serves as a SvelteKit starter template for a React Router to SvelteKit migration.
 
 The migrated code will not be fully ready to run and is subject to review and formatting.
-But, most of the (boring) the work is done by the script.
+But, most of the (boring) work such as creating folders and files is done by the script.
 
 ## Prerequisites
 - The React source project
@@ -16,9 +16,9 @@ But, most of the (boring) the work is done by the script.
 
 ## Converting route modules from React Router
 
-```bash
+```shell
 cd scripts
-npm run convert 'reactRepoName'
+npm run migrate 'reactRepoName'
 npm run format
 # fix issues manually until no syntax errors left
 npm run typecheck

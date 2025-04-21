@@ -6,11 +6,15 @@ import {getRoutes, getServerPart, getClientPart} from './react2svelte.js'
 function getFileRoutes(routes) {
   const fileRoutes = []
   for (const route of routes) {
-    if (route.path) {
-      const fileRoute = {
-        tsxFile: route.file,
-        sveltePath: ''
-      }
+    const fileRoute = {
+      tsxFile: route.file,
+      sveltePath: ''
+    }
+    if (!route.path) {
+      // index
+      fileRoutes.push(fileRoute)
+    }
+    else {
       if (route.path.includes('/:')) {
         const [base, ...params] = route.path.split('/:')
         const paramsPath = params
@@ -32,8 +36,9 @@ const reactRepo = resolve(import.meta.dirname, '..', '..', repoName)
 if (existsSync(reactRepo)) {
   const reactRouterRoutes = await getRoutes(repoName, 'npx react-router routes --json')
   const layoutRoutes = reactRouterRoutes[0].children.filter(({file}) => file.endsWith('.tsx'))
-  console.log(`found main route with ${layoutRoutes[0].children.length} entries`)
+  console.log(`react router has ${layoutRoutes[0].children.length} routes`)
   const svelteRoutes = getFileRoutes(layoutRoutes[0].children)
+  console.log(`creating ${svelteRoutes.length} svelte routes`)
   for (const svelteRoute of svelteRoutes) {
     const routePath = resolve(import.meta.dirname, '..', 'src', 'routes', svelteRoute.sveltePath)
     if (!existsSync(routePath)) {
@@ -44,7 +49,7 @@ if (existsSync(reactRepo)) {
     })
     const serverPart = getServerPart(reactCode)
     const clientPart = getClientPart(reactCode)
-    console.log(`writing svelte route ${routePath}`)
+    console.log(` - src/routes/${svelteRoute.sveltePath}`)
     await writeFile(format({name: '+page', ext: 'server.ts', dir: routePath}), serverPart)
     await writeFile(format({name: '+page', ext: 'svelte', dir: routePath}), clientPart)
   }
