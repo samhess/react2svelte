@@ -13,8 +13,7 @@ function getFileRoutes(routes) {
     if (!route.path) {
       // index
       fileRoutes.push(fileRoute)
-    }
-    else {
+    } else {
       if (route.path.includes('/:')) {
         const [base, ...params] = route.path.split('/:')
         const paramsPath = params

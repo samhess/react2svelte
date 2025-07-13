@@ -6,13 +6,14 @@ The migrated code will not be fully ready to run and is subject to review and fo
 But, most of the (boring) work such as creating folders and files is done by the script.
 
 ## Prerequisites
+
 - The React source project
-	- resides in the same parent directory as this project (../)
-	- uses React Router v7
-	- provides a *app/routes.ts* file
-	- uses TypeScript JSX (tsx) route modules which are located in the *app/routes* folder
-	- and it's source code is prettified with the options in *.prettierrc*
-	- import statements are single line expressions at the beginning of the file
+  - resides in the same parent directory as this project (../)
+  - uses React Router v7
+  - provides a _app/routes.ts_ file
+  - uses TypeScript JSX (tsx) route modules which are located in the _app/routes_ folder
+  - and it's source code is prettified with the options in _.prettierrc_
+  - import statements are single line expressions at the beginning of the file
 
 ## Converting route modules from React Router
 
